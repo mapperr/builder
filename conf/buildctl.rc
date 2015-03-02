@@ -2,14 +2,10 @@
 DIR_BIN="$DIR_BASE/bin"
 DIR_CONF="$DIR_BASE/conf"
 DIR_TOOLS="$DIR_BASE/tools"
+DIR_PACKS="$DIR_BASE/packs"
 DIR_REPO="$DIR_BASE/repo"
 DIR_CACHE="$DIR_BASE/cache"
 DIR_LOG="$DIR_BASE/log"
-
-DIR_JDK="$DIR_TOOLS/jdk"
-DIR_ANT="$DIR_TOOLS/ant"
-DIR_IVY="$DIR_TOOLS/ivy"
-
 
 FILE_DATABASE="$DIR_CONF/builder.db"
 FILE_LOG="$DIR_LOG/$DATE.log"
@@ -19,12 +15,6 @@ FILE_PID="$DIR_BASE/builder.pid"
 if uname | grep -i "cygwin" > /dev/null
 then
 	OS="cygwin"
-fi
-
-
-if [ -d "$DIR_JDK" ]
-then
-	export JAVA_HOME="$DIR_JDK"
 fi
 
 
