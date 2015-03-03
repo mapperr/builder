@@ -1,8 +1,7 @@
 #! /bin/sh
 
 DIR_BASE=`dirname $0`
-test hash readlink && DIR_BASE=`readlink -f $0`
-DIR_BASE=`dirname $DIR_BASE`
+DIR_BASE=`cd $DIR_BASE; cd ..; pwd -P`
 
 FILE_CONFIG="$DIR_BASE/core/builder.rc"
 
@@ -21,8 +20,13 @@ source "$FILE_CONFIG"
 
 DIRS="$BUILDER_DIR_SCRIPTS $BUILDER_DIR_PACKS $BUILDER_DIR_CONF $BUILDER_DIR_REPO $BUILDER_DIR_CACHE $BUILDER_DIR_LOG $BUILDER_DIR_RUN"
 
-for dir in $DIRS
-do
+for dir in $DIRS; do
+
+	if [ "$OS" = "cygwin" ]; then
+		
+		dir=`cygpath -m "$dir"`
+	fi
+	
 	test -d "$dir" || mkdir -p $dir
 done
 
@@ -247,42 +251,8 @@ builder_remove_pidfile()
 # esecuzione
 # ---------------------------------------------------------
 
-if [ "$1" = "auto" ]
+if [ "$1" = "build" ]
 then
-	builder_check_pidfile
-	
-	builder_publibs
-
-	if [ ! -z "$DIR_DIST_AUTO" ] && [ -d "$DIR_DIST_AUTO" ]
-	then
-		rm -fr "$DIR_DIST_AUTO"
-	fi
-	
-	mkdir "$DIR_DIST_AUTO"
-	
-	echo ""
-	
-	for progetto in `cat "$FILE_PROGETTI" | grep -v ^lib | awk '{print $1}'`
-	do
-		echolog "building [$progetto]"
-		builder_dist "$progetto" head "$DIR_DIST_AUTO/" 2>&1 > /dev/null
-		if [ $? -eq 0 ]
-		then
-			PATH_DIST=`builder_getlastbuild`
-			echolog "[$progetto] compilato"
-		else
-			echolog "[$progetto] ERRORE: controllare l'output di [$0 build $progetto]"
-		fi
-	done
-	
-	builder_remove_pidfile
-	exit 0
-fi
-
-if [ "$1" = "dist" ]
-then
-	#builder_check_pidfile
-
 	shift
 	builder_dist $1 $2 $3
 	RET=$?
