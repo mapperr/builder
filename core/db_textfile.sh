@@ -18,13 +18,7 @@ source "$FILE_CONFIG"
 # setup
 # ---------------------------------------------------------
 
-DIRS="$DIR_REPO $DIR_CACHE $DIR_LOG"
-
-for dir in $DIRS
-do
-	test -d "$dir" || mkdir $dir
-done
-
+test -f $FILE_DATABASE || touch $FILE_DATABASE
 
 
 # ---------------------------------------------------------
@@ -35,26 +29,53 @@ helpmsg()
 {
 	SCRIPT_NAME=`basename $0`
 	echo ""
-	echo "build <definition> [revision|tag|'head'] [build_tool] [artifact_type]"
+	echo "comandi:"
 	echo ""
-	echo "	builds an [artifact_type] with [build_tool] from the <definition> repo checked out at [revision]"
+	echo "dist <nome_progetto> [revision] [path]"
 	echo ""
-	echo "build <path> <build_tool> <artifact_type>"
+	echo "		crea un jar o un war del progetto alla revision specificata (o alla head se omessa) e eventualmente lo copia nel path specificato"
 	echo ""
-	echo "	builds an <artifact_type> with <build_tool> from the sources at <path>"
+	echo "auto"
+	echo ""
+	echo "		compila tutti i progetti all'ultima revision e li copia nella cartella [$DIR_DIST_AUTO]"
+	echo ""
+	echo "pub"
+	echo ""
+	echo "		compila e pubblica tutte le librerie censite nel file [$FILE_PROGETTI]"
+	echo "		un progetto e' riconosciuto come libreria se e' censito con un nome che inizi con 'lib'"
+	echo "		le librerie vengono compilate e pubblicate nell'ordine in cui sono censite nel file [$FILE_PROGETTI]"
 	echo ""
 	echo "ls"
 	echo ""
-	echo "	list build definitions"
+	echo "		lista dei progetti disponibili contenuti nel file [$FILE_PROGETTI]"
 	echo ""
 	echo "clean"
 	echo ""
-	echo "	remove temporary files"
+	echo "		elimina file temporanei"
+	echo ""
+	echo "last"
+	echo ""
+	echo "		stampa il path dell'ultima build effettuata"
+	echo ""
+	echo "rev"
+	echo ""
+	echo "		get latest revision"
+	echo ""
+	echo "svn"
+	echo ""
+	echo "		wrapper per il client svn"
+	echo ""
+	echo "ant"
+	echo ""
+	echo "		wrapper per ant"
 	echo ""
 }
 
 builder_getlastbuild()
 {
+	# su linux funziona, su mobaxterm no perche` e` un busybox e il find non ha l'azione "printf"
+	#find "$DIR_DIST" -type f -printf "%A@ %p\n" | sort -n | tail -n1 | awk '{print $2}'
+	
 	NEWER=""
 	
 	for file in `find "$DIR_DIST" -type f`
@@ -70,10 +91,6 @@ builder_getlastbuild()
 	done
 	
 	echo "$NEWER"
-	
-	# la seguente linea su un linux non-busybox funziona, su mobaxterm (busybox) no perche` il find non ha l'azione "printf"
-	#find "$DIR_DIST" -type f -printf "%A@ %p\n" | sort -n | tail -n1 | awk '{print $2}'
-	
 }
 
 builder_clean()
@@ -266,7 +283,7 @@ builder_remove_pidfile()
 }
 
 # ---------------------------------------------------------
-# esecuzione
+# exec
 # ---------------------------------------------------------
 
 if [ "$1" = "auto" ]

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ivysettings>
+    
+   	<include file="${user.home}/.ivy2/ivysettings-passwd.xml"/>
+    
+   	<!-- build properties -->
+    
+   	<properties file="build.properties"/>
+    
+    
+   	<!-- properties -->
+    
+   	<property name="ivy.dep.file" value="${dir.conf}/ivy.xml"/>
+    
+   	<property name="pattern.retrieve" value="[artifact]-[revision](-[classifier]).[ext]"/>
+   	<property name="pattern.ivyfile" value="[organisation]/[module]/[branch]/[revision]/ivy.xml"/>
+   	<property name="pattern.artifact" value="[organisation]/[module]/[branch]/[revision]/[type]s/[artifact]-[revision].[ext]"/>
+    
+    <!--
+   	<property name="sftprepopath" value="/data/ivy/repository"/>
+   	<property name="sftphost" value="!ip!"/>
+    -->
+	
+   	<!--
+   	settati nell'include passwd
+   	<property name="sftpuser" value=""/>
+   	<property name="sftppass" value=""/>
+   	-->
+    
+   	<property name="localrepopath" value="${user.home}/.ivy2/repository"/>
+    
+    
+   	<!-- ivy settings -->
+    
+   	<settings defaultResolver="chain" defaultBranch="trunk"/>
+    
+         <resolvers>
+    
+             <chain name="chain" returnFirst="true">
+    
+				<filesystem name="local">
+					<ivy pattern="${localrepopath}/${pattern.ivyfile}"/>
+					<artifact pattern="${localrepopath}/${pattern.artifact}"/>
+				</filesystem>
+
+				<!--
+				<sftp name="cabel" user="${sftpuser}" host="${sftphost}" userPassword="${sftppass}">
+					<ivy pattern="${sftprepopath}/${pattern.ivyfile}"/>
+					<artifact pattern="${sftprepopath}/${pattern.artifact}"/>
+				</sftp>
+				-->
+    
+   				<ibiblio name="maven2" m2compatible="true"/>
+    
+             </chain>
+    
+         </resolvers>
+    
+   </ivysettings>
+

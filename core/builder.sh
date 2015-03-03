@@ -1,9 +1,10 @@
 #! /bin/sh
 
-cd `dirname $0`; cd ..
-DIR_BASE=`pwd -P`
+DIR_BASE=`dirname $0`
+test hash readlink && DIR_BASE=`readlink -f $0`
+DIR_BASE=`dirname $DIR_BASE`
 
-FILE_CONFIG="conf/builder.rc"
+FILE_CONFIG="$DIR_BASE/core/builder.rc"
 
 if ! [ -r "$FILE_CONFIG" ]
 then
@@ -18,81 +19,39 @@ source "$FILE_CONFIG"
 # setup
 # ---------------------------------------------------------
 
-SQL="create table builder_definitions (id int primary key, name varchar(30), repo_url varchar(200), repo_type varchar(20), repo_credentials varchar(100))"
-test -f $FILE_DATABASE || $BIN_SQLITE $FILE_DATABASE "$SQL"
+DIRS="$BUILDER_DIR_SCRIPTS $BUILDER_DIR_PACKS $BUILDER_DIR_CONF $BUILDER_DIR_REPO $BUILDER_DIR_CACHE $BUILDER_DIR_LOG $BUILDER_DIR_RUN"
+
+for dir in $DIRS
+do
+	test -d "$dir" || mkdir -p $dir
+done
 
 
 
 # ---------------------------------------------------------
-# funzioni
+# functions
 # ---------------------------------------------------------
 
 helpmsg()
 {
 	SCRIPT_NAME=`basename $0`
 	echo ""
-	echo "comandi:"
+	echo "build <build_definition_name> [revision|tag|'head'] [build_tool] [artifact_type]"
 	echo ""
-	echo "dist <nome_progetto> [revision] [path]"
+	echo "	builds an [artifact_type] with [build_tool] from the <build_definition_name> repo checked out at [revision]"
 	echo ""
-	echo "		crea un jar o un war del progetto alla revision specificata (o alla head se omessa) e eventualmente lo copia nel path specificato"
+	echo "build <path> <build_tool> <artifact_type>"
 	echo ""
-	echo "auto"
-	echo ""
-	echo "		compila tutti i progetti all'ultima revision e li copia nella cartella [$DIR_DIST_AUTO]"
-	echo ""
-	echo "pub"
-	echo ""
-	echo "		compila e pubblica tutte le librerie censite nel file [$FILE_PROGETTI]"
-	echo "		un progetto e' riconosciuto come libreria se e' censito con un nome che inizi con 'lib'"
-	echo "		le librerie vengono compilate e pubblicate nell'ordine in cui sono censite nel file [$FILE_PROGETTI]"
+	echo "	builds an <artifact_type> with <build_tool> from the sources at <path>"
 	echo ""
 	echo "ls"
 	echo ""
-	echo "		lista dei progetti disponibili contenuti nel file [$FILE_PROGETTI]"
+	echo "	list build definitions"
 	echo ""
 	echo "clean"
 	echo ""
-	echo "		elimina file temporanei"
+	echo "	remove temporary files"
 	echo ""
-	echo "last"
-	echo ""
-	echo "		stampa il path dell'ultima build effettuata"
-	echo ""
-	echo "rev"
-	echo ""
-	echo "		get latest revision"
-	echo ""
-	echo "svn"
-	echo ""
-	echo "		wrapper per il client svn"
-	echo ""
-	echo "ant"
-	echo ""
-	echo "		wrapper per ant"
-	echo ""
-}
-
-builder_getlastbuild()
-{
-	# su linux funziona, su mobaxterm no perche` e` un busybox e il find non ha l'azione "printf"
-	#find "$DIR_DIST" -type f -printf "%A@ %p\n" | sort -n | tail -n1 | awk '{print $2}'
-	
-	NEWER=""
-	
-	for file in `find "$DIR_DIST" -type f`
-	do
-		if [ -z "$NEWER" ]
-		then
-			NEWER="$file"
-		fi
-		if [ `stat -c %Y $file` -gt `stat -c %Y $NEWER` ]
-		then
-			NEWER="$file"
-		fi
-	done
-	
-	echo "$NEWER"
 }
 
 builder_clean()
@@ -387,30 +346,6 @@ then
 	
 	shift
 	builder_get_rev $@
-	RET=$?
-	
-	builder_remove_pidfile
-	exit $RET
-fi
-
-if [ "$1" = "svn" ]
-then
-	builder_check_pidfile
-
-	shift
-	$DIR_BIN/svnwrapper.sh $@
-	RET=$?
-	
-	builder_remove_pidfile
-	exit $RET
-fi
-
-if [ "$1" = "ant" ]
-then
-	builder_check_pidfile
-	
-	shift
-	$DIR_BIN/antwrapper.sh $@
 	RET=$?
 	
 	builder_remove_pidfile

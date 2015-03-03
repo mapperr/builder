@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE ant>
+<project name="builder" default="dist" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<condition property="builder.ivy.settings" value="${user.home}/.ivy2/ivysettings.xml">
+		<not>
+			<isset property="builder.ivy.settings" />
+		</not>
+	</condition>
+
+	<ivy:configure file="${builder.ivy.settings}" />
+	<ivy:info />
+
+	<!-- costruzione dinamica della revision di sviluppo -->
+	<condition property="branch.fragment" value="${ivy.branch}." else="">
+		<and>
+			<isset property="ivy.branch" />
+		</and>
+	</condition>
+	<condition property="vcs.fragment" value="r${vcs.revision}." else="">
+		<and>
+			<isset property="vcs.revision" />
+		</and>
+	</condition>
+	<tstamp>
+		<format property="current.timestamp" pattern="yyyyMMddHHmmss" />
+	</tstamp>
+	<property name="snapshot.revision" value="${ivy.revision}.${branch.fragment}${vcs.fragment}${current.timestamp}" />
+
+	<!-- definizione classpath per la compilazione -->
+	<path id="classpath">
+		<fileset dir="${dir.lib.compile}">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
+
+	<!-- condizioni -->
+	<condition property="make_war">
+		<available file="${dir.web}" type="dir" />
+	</condition>
+	
+	<condition property="make_jar">
+		<and>
+			<not>
+				<available file="${dir.web}" type="dir" />
+			</not>
+			<not>
+				<available file="${dir.conf}/MANIFEST.MF" type="file" />
+			</not>
+		</and>
+	</condition>
+	
+	<condition property="make_runjar">
+		<available file="${dir.conf}/MANIFEST.MF" type="file" />
+	</condition>
+
+	<!-- TARGETS -->
+
+	<target name="clean">
+		<delete dir="${dir.build}" />
+	</target>
+
+	<target name="init" depends="clean">
+
+		<condition property="builder.dir.dist" value="${dir.dist}">
+			<not>
+				<isset property="builder.dir.dist" />
+			</not>
+		</condition>
+
+		<mkdir dir="${builder.dir.dist}" />
+		<mkdir dir="${dir.build}" />
+		<mkdir dir="${dir.classes}" />
+		<mkdir dir="${dir.lib.compile}" />
+	</target>
+
+	<target name="resolve" depends="init">
+		<ivy:resolve />
+		<ivy:retrieve sync="true" pattern="${dir.lib.compile}/${pattern.retrieve}" conf="*" />
+	</target>
+
+	<target name="compile" depends="resolve">
+		<javac includeantruntime="false" srcdir="${dir.src}" destdir="${dir.classes}" encoding="ISO-8859-1" debug="true" debuglevel="lines,vars,source">
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+
+	<target name="dist_runjar" depends="compile" if="make_runjar">
+		<property name="jar.dipendenze" value="${dir.lib.compile}/${ivy.module}-${ivy.revision}-dipendenze.jar" />
+
+		<jar jarfile="${jar.dipendenze}">
+			<zipgroupfileset dir="${dir.lib.compile}/">
+				<include name="**/*.jar" />
+			</zipgroupfileset>
+		</jar>
+
+		<jar destfile="${builder.dir.dist}/${ivy.organisation}.${ivy.module}/${ivy.module}-${snapshot.revision}.jar" manifest="${dir.conf}/MANIFEST.MF">
+			<fileset dir="${dir.classes}" />
+
+			<!-- inclusione di altri files, inclusi i sorgenti -->
+			<fileset dir="${dir.src}" />
+
+			<!-- inclusione di altri files, esclusi i sorgenti -->
+			<!-- <fileset dir="${dir.src}" excludes="**/*.java" /> -->
+
+			<!-- inclusione dipendenze -->
+			<zipfileset src="${jar.dipendenze}">
+				<exclude name="META-INF/*.SF" />
+			</zipfileset>
+		</jar>
+		<antcall target="clean" />
+	</target>
+
+	<target name="dist_jar" depends="compile" if="make_jar">
+		<jar destfile="${builder.dir.dist}/${ivy.organisation}.${ivy.module}/${ivy.module}-${snapshot.revision}.jar">
+			<fileset dir="${dir.classes}" />
+
+			<!-- inclusione di altri files, inclusi i sorgenti -->
+			<fileset dir="${dir.src}" />
+
+			<!-- inclusione di altri files, esclusi i sorgenti -->
+			<!-- <fileset dir="${dir.src}" excludes="**/*.java" /> -->
+		</jar>
+		<antcall target="clean" />
+	</target>
+
+	<target name="dist_war" depends="compile" if="make_war">
+		<ivy:retrieve sync="true" pattern="${dir.lib.deploy}/${pattern.retrieve}" conf="deploy" />
+		<property name="dist.filename" value="${builder.dir.dist}/${ivy.organisation}.${ivy.module}/${ivy.module}-${snapshot.revision}.war" />
+
+		<war destfile="${dist.filename}">
+			<fileset dir="${dir.web}" excludes="WEB-INF/lib/**" />
+
+			<!-- esclusione delle resources -->
+			<!-- <fileset dir="${dir.web}" excludes="WEB-INF/lib/** resources/**"/> -->
+
+			<classes dir="${dir.classes}" />
+
+			<!-- inclusione di altri files, esclusi i sorgenti -->
+			<classes dir="${dir.src}" excludes="**/*.java" />
+
+			<lib dir="${dir.lib.deploy}" includes="**/*.jar" />
+		</war>
+		<antcall target="clean" />
+	</target>
+
+	<target name="dist" depends="dist_runjar,dist_jar,dist_war">
+	</target>
+
+	<target name="publish" depends="dist">
+		<ivy:publish resolver="local" overwrite="true" status="integration">
+			<artifacts pattern="${builder.dir.dist}/${ivy.organisation}.${ivy.module}/${ivy.module}-${snapshot.revision}.[ext]" />
+		</ivy:publish>
+	</target>
+
+</project>

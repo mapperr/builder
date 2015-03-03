@@ -1,3 +1,0 @@
-# name		repo_url		repo_type		repo_auth		project_root		build_tool		artifact_type
-# -----------------------------------------------------------------------------------------------------------
-libutil		http://192.168.0.133/svn/cabellab/libutil		svn		batchcabellab,password	/		antivy		jar

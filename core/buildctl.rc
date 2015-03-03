@@ -1,0 +1,47 @@
+get_timestamp()
+{
+	DATE=`date +'%Y%m%d'`
+	TIME=`date +'%H%M%S'`
+	TIMESTAMP="$DATE$TIME"
+	
+	if [ "$1" = "date" ]
+	then
+		echo "$DATE"
+		return 0
+	elif [ "$1" = "time" ]
+	then
+		echo "$TIME"
+		return 0
+	fi
+	echo "$TIMESTAMP"
+}
+
+
+# DIR_BASE is defined in builder.sh: it is a runtime value relative to the running script
+BUILDER_DIR_CORE="$DIR_BASE/core"
+BUILDER_DIR_SCRIPTS="$DIR_BASE/usr/script"
+BUILDER_DIR_PACKS="$DIR_BASE/usr/packs"
+BUILDER_DIR_CONF="$DIR_BASE/usr/conf"
+BUILDER_DIR_REPO="$DIR_BASE/var/repo"
+BUILDER_DIR_CACHE="$DIR_BASE/var/cache"
+BUILDER_DIR_LOG="$DIR_BASE/var/log"
+BUILDER_DIR_RUN="$DIR_BASE/var/run"
+
+BUILDER_FILE_DATABASE="$DIR_CONF/builder.db"
+BUILDER_FILE_LOG="$DIR_LOG/`get_timestamp date`.log"
+BUILDER_FILE_PID="$DIR_RUN/builder.pid"
+
+BUILDER_BIN_DB="$DIR_BIN/db_text.sh"
+
+if uname | grep -i "cygwin" > /dev/null
+then
+	OS="cygwin"
+fi
+
+
+echolog()
+{
+	logmsg="`get_timestamp date`.`get_timestamp time` >>> $1"
+	echo "$logmsg"
+	echo "$logmsg" >> "$FILE_LOG"
+}
