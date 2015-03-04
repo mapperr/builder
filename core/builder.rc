@@ -31,7 +31,12 @@ BUILDER_FILE_DATABASE="$DIR_CONF/builder.db"
 BUILDER_FILE_LOG="$DIR_LOG/`get_timestamp date`.log"
 BUILDER_FILE_PID="$DIR_RUN/builder.pid"
 
-BUILDER_BIN_DB="$DIR_BIN/db_text.sh"
+BUILDER_BIN_DB_TXT="$DIR_BIN/db_text.sh"
+BUILDER_BIN_REPO_SVN="$DIR_BIN/repo.sh"
+
+# usage configuration
+BUILDER_BIN_DB=$BUILDER_BIN_DB_TXT
+
 
 if uname | grep -i "cygwin" > /dev/null
 then

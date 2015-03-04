@@ -1,13 +1,13 @@
 #! /bin/sh
 
-cd `dirname $0`; cd ..
-DIR_BASE=`pwd -P`
+DIR_BASE=`dirname $0`
+DIR_BASE=`cd $DIR_BASE; cd ..; pwd -P`
 
-FILE_CONFIG="conf/buildctl.rc"
+FILE_CONFIG="$DIR_BASE/core/builder.rc"
 
 if ! [ -r "$FILE_CONFIG" ]
 then
-	echo "file di configurazione [$FILE_CONFIG] non trovato"
+	echo "configuration file [$FILE_CONFIG] not found"
 	exit 1
 fi
 
@@ -18,41 +18,21 @@ source "$FILE_CONFIG"
 # setup
 # ---------------------------------------------------------
 
-DIRS="$DIR_REPO $DIR_DIST $DIR_LOG"
-
-for dir in $DIRS
-do
-	if ! [ -d "$dir" ]
-	then
-		mkdir $dir
-	fi
-done
+# ?
 
 
 
 # ---------------------------------------------------------
-# funzioni
+# functions
 # ---------------------------------------------------------
 
 helpmsg()
 {
 	SCRIPT_NAME=`basename $0`
 	echo ""
-	echo "comandi:"
+	echo "get <artifact_name> [revision]"
 	echo ""
-	echo "dist <nome_progetto> [revision] [path]"
-	echo ""
-	echo "		crea un jar o un war del progetto alla revision specificata (o alla head se omessa) e eventualmente lo copia nel path specificato"
-	echo ""
-	echo "auto"
-	echo ""
-	echo "		compila tutti i progetti all'ultima revision e li copia nella cartella [$DIR_DIST_AUTO]"
-	echo ""
-	echo "pub"
-	echo ""
-	echo "		compila e pubblica tutte le librerie censite nel file [$FILE_PROGETTI]"
-	echo "		un progetto e' riconosciuto come libreria se e' censito con un nome che inizi con 'lib'"
-	echo "		le librerie vengono compilate e pubblicate nell'ordine in cui sono censite nel file [$FILE_PROGETTI]"
+	echo "	"
 	echo ""
 	echo "ls"
 	echo ""
@@ -69,14 +49,6 @@ helpmsg()
 	echo "rev"
 	echo ""
 	echo "		get latest revision"
-	echo ""
-	echo "svn"
-	echo ""
-	echo "		wrapper per il client svn"
-	echo ""
-	echo "ant"
-	echo ""
-	echo "		wrapper per ant"
 	echo ""
 }
 
@@ -329,8 +301,6 @@ fi
 
 if [ "$1" = "dist" ]
 then
-	#builder_check_pidfile
-
 	shift
 	builder_dist $1 $2 $3
 	RET=$?
